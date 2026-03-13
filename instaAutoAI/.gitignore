@@ -1,21 +1,57 @@
-.env
+# Python
 __pycache__/
+*.py[cod]
 *.pyc
+*.pyd
 *.pyo
+*.so
+.Python
 *.egg-info/
 dist/
 build/
-.venv/
+*.egg
+
+# Virtual environments
 venv/
+env/
+ENV/
+.venv/
+.venv.bak/
+.env
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
 media/
-!media/jobs/.gitkeep
-logs/*.log
-!logs/.gitkeep
-checkpoints/langgraph.sqlite
-!checkpoints/.gitkeep
 staticfiles/
-*.DS_Store
-.idea/
+static/
+*.pot
+
+# Celery
+celerybeat-schedule.db
+celerybeat.pid
+
+# IDE
 .vscode/
-node_modules/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
+checkpoints/
+*.crew/
+*.langgraph/
 instaAutoAI_gantt_7day.html

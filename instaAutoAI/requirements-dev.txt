@@ -22,8 +22,6 @@ faker>=25.0.0                   # Realistic fake data for factory fields
 httpx>=0.27.0                   # AsyncClient for DRF endpoint tests (no live server)
 
 # ── Channels Testing ──────────────────────────────────────────────────────────
-# WebsocketCommunicator for consumer tests — ships with channels, pinned here
-# for explicitness
 channels>=4.1.0                 # channels.testing.WebsocketCommunicator
 
 # ── Linting & Formatting ──────────────────────────────────────────────────────

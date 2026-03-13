@@ -14,8 +14,6 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── PyTorch — CUDA 12.4 build ─────────────────────────────────────────────────
-# Install via: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-# Listed here for documentation; pip will skip if already installed.
 torch>=2.5.0
 torchvision>=0.20.0
 torchaudio>=2.5.0
@@ -28,11 +26,11 @@ accelerate>=1.0.0
 huggingface-hub>=0.25.0
 Pillow>=10.4.0
 
-# ── LLM / Agent Orchestration ─────────────────────────────────────────────────
-langgraph>=1.0.0
+# ── LLM / Agent Orchestration (UPDATED TO LATEST VERSIONS) ────────────────────
+langgraph>=1.1.0                # StateSchema, Standard JSON Schema
+crewai>=1.9.0                   # Native async, structured outputs
 langchain>=0.3.0
 langchain-community>=0.3.0
-crewai>=0.80.0
 openai>=1.50.0                  # Ollama uses the OpenAI-compatible endpoint
 
 # ── HTTP Clients ──────────────────────────────────────────────────────────────
@@ -41,7 +39,6 @@ httpx>=0.27.0                   # ComfyUI API polling + health checks
 # ── Django Stack ──────────────────────────────────────────────────────────────
 django>=5.1
 djangorestframework>=3.15.0
-# django-channels>=4.1.0
 channels>=4.1.0
 channels-redis>=4.2.0
 daphne>=4.1.0                   # ASGI server (replaces gunicorn for WebSocket support)
@@ -49,7 +46,7 @@ dj-database-url>=2.0.0          # Parses DATABASE_URL env var into DATABASES dic
 django-filter>=24.0             # DRF filter backend for job list endpoint
 
 # ── Database ──────────────────────────────────────────────────────────────────
-psycopg[binary]>=3.1.0          # PostgreSQL adapter (psycopg3) — do NOT use psycopg2
+psycopg[binary]>=3.1.0          # PostgreSQL adapter (psycopg3)
 
 # ── Task Queue ────────────────────────────────────────────────────────────────
 celery>=5.3.0
