@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# InstaAutoAI — Development & Testing Dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Install with:
+#   pip install -r requirements-dev.txt
+#
+# Do NOT install this in the Docker production image.
+# Use a separate build stage or requirements.txt only for prod.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+-r requirements.txt
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest>=8.0.0
+pytest-django>=4.8.0            # Django DB fixtures, settings, client helpers
+pytest-asyncio>=0.23.0          # async def test_* support (asyncio_mode = auto)
+pytest-cov>=5.0.0               # Coverage reports
+factory-boy>=3.3.0              # Model factories for GenerationJob fixtures
+faker>=25.0.0                   # Realistic fake data for factory fields
+httpx>=0.27.0                   # AsyncClient for DRF endpoint tests (no live server)
+
+# ── Channels Testing ──────────────────────────────────────────────────────────
+# WebsocketCommunicator for consumer tests — ships with channels, pinned here
+# for explicitness
+channels>=4.1.0                 # channels.testing.WebsocketCommunicator
+
+# ── Linting & Formatting ──────────────────────────────────────────────────────
+black>=24.0.0                   # Code formatter (line-length 100, py311 target)
+ruff>=0.4.0                     # Fast linter — replaces flake8, isort, pyupgrade
+
+# ── Type Checking ─────────────────────────────────────────────────────────────
+mypy>=1.10.0
+django-stubs>=5.0.0             # Django type stubs for mypy
+djangorestframework-stubs>=3.15.0  # DRF type stubs
+
+# ── Dev Tooling ───────────────────────────────────────────────────────────────
+ipython>=8.0.0                  # Better REPL for manage.py shell
+django-extensions>=3.2.0        # shell_plus, graph_models, etc.
+django-debug-toolbar>=4.3.0     # SQL query inspector in DEBUG mode
+Werkzeug>=3.0.0                 # Required by django-extensions runserver_plus
