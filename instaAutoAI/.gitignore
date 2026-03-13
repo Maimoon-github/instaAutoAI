@@ -18,4 +18,4 @@ staticfiles/
 .idea/
 .vscode/
 node_modules/
-docs/instaAutoAI_gantt_7day.html
+instaAutoAI_gantt_7day.html
