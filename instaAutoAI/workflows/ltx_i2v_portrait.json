@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "model": {
+    "id": "Lightricks/LTX-Video",
+    "variant": "fp8",
+    "distilled": true,
+    "pipeline_config_path": "configs/ltxv-13b-0.9.8-distilled.yaml",
+    "text_encoder": "t5xxl_fp16",
+    "vae": {
+      "enable_tiling": false,
+      "dtype": "float8_e4m3fn"
+    }
+  },
+  "generation": {
+    "resolution": {
+      "width": 768,
+      "height": 512,
+      "constraints": {
+        "divisible_by": 32,
+        "notes": "Portrait orientation (width > height). Both dimensions must be multiples of 32."
+      }
+    },
+    "frames": {
+      "count": 65,
+      "fps": 24,
+      "duration_seconds": 2.7,
+      "constraints": {
+        "divisible_by": 8,
+        "offset": 1,
+        "notes": "Total frames must be (8 * n) + 1 for LTX Video."
+      }
+    },
+    "sampling": {
+      "steps": 20,
+      "guidance_scale": 4.0,
+      "sampler": "euler",
+      "scheduler": "normal",
+      "seed": null,
+      "notes": "I2V optimal CFG is lower than T2V (3-5). Distilled models require 15-20 steps."
+    }
+  },
+  "conditioning": {
+    "type": "image_first_frame",
+    "image_path": null,
+    "start_frame": 0,
+    "conditioning_strength": 1.0,
+    "motion_bucket_id": 127,
+    "noise_aug_strength": 0.0,
+    "notes": "Placeholder for image-to-video. The conditioning image is used as the first frame."
+  },
+  "prompts": {
+    "positive": "A cinematic portrait of a person, photorealistic, soft lighting, subtle camera movement, natural skin texture, expressive eyes, gentle smile, shallow depth of field, high detail, 8k, professional photography style",
+    "negative": "deformed, blurry, low quality, jpeg artifacts, unnatural motion, distorted face, extra limbs, bad anatomy, worst quality, watermark, text",
+    "style": "photorealistic",
+    "use_template": true,
+    "template_variables": {
+      "subject": "person",
+      "mood": "calm",
+      "lighting": "soft",
+      "camera_movement": "subtle"
+    }
+  },
+  "optimization": {
+    "fp8": true,
+    "cpu_offload": false,
+    "attention_slicing": "auto",
+    "torch_compile": false,
+    "enable_sequential_offload": false,
+    "vae_tiling": false,
+    "notes": "FP8 reduces VRAM to ~28GB on RTX 4090. CPU offload may increase latency. VAE tiling only for high-resolution inputs."
+  },
+  "resources": {
+    "min_vram_gb": 24,
+    "recommended_vram_gb": 28,
+    "max_batch_size": 1,
+    "timeout_seconds": 300,
+    "retry_count": 3,
+    "gpu_device": "cuda:0"
+  },
+  "fallback": {
+    "resolution_fallback": "crop",
+    "frame_count_fallback": "adjust_to_nearest_valid",
+    "vram_insufficient_action": "fallback_to_fp8"
+  }
+}
