@@ -1,0 +1,53 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Development files
+*.log
+*.pid
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node / frontend (if any)
+node_modules/
+npm-debug.log
+
+# Media / static (generated at build)
+media/
+staticfiles/
+static/
+
+# Deployment configs (not needed in image)
+deploy/nginx.conf
+deploy/supervisord.conf
+deploy/docker-compose*.yml
+
+# Docs
+docs/
+README.md
