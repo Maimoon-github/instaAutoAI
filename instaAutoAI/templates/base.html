@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI Video Generation Pipeline Dashboard">
+    
+    <title>{% block title %}AI Pipeline Dashboard{% endblock %}</title>
+    
+    {% block head %}
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}?v=1.0">
+    {% endblock %}
+    
+    <!-- WebSocket Configuration -->
+    <script>
+        window.CONFIG = {
+            websocketUrl: '{{ websocket_url|default:"ws://localhost:8000/ws/jobs/" }}',
+            userId: '{{ user.id|default:"anonymous" }}',
+            csrfToken: '{{ csrf_token }}'
+        };
+    </script>
+</head>
+<body class="dashboard-body">
+    {% block body %}
+    
+    <!-- Header -->
+    <header class="dashboard-header" role="banner">
+        <div class="header-brand">
+            <h1 class="header-title">🎬 AI Pipeline</h1>
+        </div>
+        <nav class="header-nav" role="navigation" aria-label="Main navigation">
+            {% block header_nav %}
+            <a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a>
+            <a href="{% url 'jobs:list' %}" class="nav-link">Jobs</a>
+            <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
+            {% endblock %}
+        </nav>
+        <div class="header-actions">
+            {% block header_actions %}
+            <div class="connection-status" id="connectionStatus" aria-live="polite">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span class="status-text" id="statusText">Connecting...</span>
+            </div>
+            {% if user.is_authenticated %}
+            <span class="user-info">{{ user.username }}</span>
+            <a href="{% url 'logout' %}" class="btn btn-secondary">Logout</a>
+            {% endif %}
+            {% endblock %}
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="dashboard-sidebar" role="complementary" aria-label="Sidebar">
+        {% block sidebar %}
+        <nav class="sidebar-nav" aria-label="Pipeline sections">
+            <h2 class="sidebar-title">Pipeline</h2>
+            <ul class="sidebar-menu">
+                <li><a href="#queue" class="sidebar-link" data-section="queue">Job Queue</a></li>
+                <li><a href="#active" class="sidebar-link" data-section="active">Active Jobs</a></li>
+                <li><a href="#completed" class="sidebar-link" data-section="completed">Completed</a></li>
+                <li><a href="#failed" class="sidebar-link" data-section="failed">Failed</a></li>
+            </ul>
+            
+            <h2 class="sidebar-title">Resources</h2>
+            <ul class="sidebar-menu">
+                <li><a href="#vram" class="sidebar-link" data-section="vram">VRAM Usage</a></li>
+                <li><a href="#logs" class="sidebar-link" data-section="logs">System Logs</a></li>
+            </ul>
+        </nav>
+        {% endblock %}
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main" role="main" id="mainContent">
+        {% block content %}
+        <!-- Content injected here -->
+        {% endblock %}
+    </main>
+
+    <!-- Right Panel (Details/Inspector) -->
+    <aside class="dashboard-panel" role="complementary" aria-label="Details panel">
+        {% block panel %}
+        <div class="panel-placeholder">
+            <p>Select a job to view details</p>
+        </div>
+        {% endblock %}
+    </aside>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer" role="contentinfo">
+        {% block footer %}
+        <p>&copy; 2025 AI Pipeline System | Django 5.2</p>
+        <div class="footer-meta">
+            <span id="version">v1.0.0</span>
+            <span id="render-time"></span>
+        </div>
+        {% endblock %}
+    </footer>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer" aria-live="assertive" aria-atomic="true"></div>
+
+    {% endblock %}
+
+    <!-- Scripts -->
+    {% block scripts %}
+    <script src="{% static 'js/dashboard.js' %}?v=1.0" defer></script>
+    {% endblock %}
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found (404) - AI Pipeline{% endblock %}
+
+{% block content %}
+<div class="error-container" role="alert">
+    <div class="error-code">404</div>
+    <h1 class="error-title">Page Not Found</h1>
+    <p class="error-message">
+        The page you're looking for doesn't exist or has been moved.
+    </p>
+    <div class="error-actions">
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">← Back to Dashboard</a>
+        <button onclick="history.back()" class="btn btn-secondary">Go Back</button>
+    </div>
+    <div class="error-meta">
+        <p>If you believe this is an error, please contact support.</p>
+        <code class="error-request">Request ID: {{ request_id|default:"unknown" }}</code>
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+{% block panel %}{% endblock %}

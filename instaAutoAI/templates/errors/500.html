@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error (500) - AI Pipeline{% endblock %}
+
+{% block content %}
+<div class="error-container error-server" role="alert">
+    <div class="error-code">500</div>
+    <h1 class="error-title">Internal Server Error</h1>
+    <p class="error-message">
+        Something went wrong on our end. Our team has been notified and is working on a fix.
+    </p>
+    <div class="error-actions">
+        <a href="{% url 'dashboard' %}" class="btn btn-primary">← Back to Dashboard</a>
+        <button onclick="window.location.reload()" class="btn btn-secondary">Retry</button>
+    </div>
+    <div class="error-meta">
+        <p>This error has been logged with reference:</p>
+        <code class="error-request">Error ID: {{ error_id|default:"unknown" }}</code>
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}
+{% block panel %}{% endblock %}

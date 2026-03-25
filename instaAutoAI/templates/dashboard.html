@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pipeline Dashboard - AI Video Generation{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <!-- Quick Stats Row -->
+    <section class="stats-grid" aria-label="Pipeline statistics">
+        <article class="stat-card" data-status="pending">
+            <h3 class="stat-label">Pending</h3>
+            <p class="stat-value" id="pendingCount">0</p>
+            <span class="stat-trend">In queue</span>
+        </article>
+        
+        <article class="stat-card" data-status="running">
+            <h3 class="stat-label">Running</h3>
+            <p class="stat-value" id="runningCount">0</p>
+            <div class="stat-indicator active"></div>
+        </article>
+        
+        <article class="stat-card" data-status="completed">
+            <h3 class="stat-label">Completed</h3>
+            <p class="stat-value" id="completedCount">0</p>
+            <span class="stat-trend success">+12 today</span>
+        </article>
+        
+        <article class="stat-card" data-status="failed">
+            <h3 class="stat-label">Failed</h3>
+            <p class="stat-value" id="failedCount">0</p>
+            <button class="btn btn-sm btn-text" hx-get="/jobs/failed/retry" hx-target="#failedList">Retry All</button>
+        </article>
+    </section>
+
+    <!-- VRAM Monitor -->
+    <section class="resource-monitor" aria-label="GPU Resources">
+        <h2 class="section-title">VRAM Usage</h2>
+        <div class="vram-bars">
+            <div class="vram-card" data-gpu="0">
+                <div class="vram-header">
+                    <span class="vram-label">GPU 0</span>
+                    <span class="vram-value" id="vram0Text">0 / 24 GB</span>
+                </div>
+                <div class="vram-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <div class="vram-fill" id="vram0Bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Job Queue -->
+    <section class="job-section" id="queueSection" aria-label="Job queue">
+        <header class="section-header">
+            <h2 class="section-title">Recent Jobs</h2>
+            <div class="section-actions">
+                <button class="btn btn-primary" hx-get="/jobs/new" hx-target="#newJobModal">
+                    + New Job
+                </button>
+                <button class="btn btn-refresh" id="refreshBtn" aria-label="Refresh jobs">
+                    ↻ Refresh
+                </button>
+            </div>
+        </header>
+
+        <div class="job-list" id="jobList" role="list" aria-label="Jobs list">
+            <!-- Job items injected via WebSocket or HTMX -->
+            <article class="job-item skeleton" role="listitem">
+                <div class="job-status-indicator skeleton"></div>
+                <div class="job-info">
+                    <div class="job-title skeleton-text"></div>
+                    <div class="job-meta skeleton-text"></div>
+                </div>
+            </article>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="pagination" aria-label="Job pagination">
+            <button class="btn btn-page" disabled>← Previous</button>
+            <span class="page-info">Page 1 of 1</span>
+            <button class="btn btn-page" disabled>Next →</button>
+        </nav>
+    </section>
+
+    <!-- Active Pipelines -->
+    <section class="pipeline-section" aria-label="Active pipelines">
+        <h2 class="section-title">Active Pipelines</h2>
+        <div class="pipeline-grid" id="pipelineGrid">
+            <!-- Pipeline cards injected dynamically -->
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block panel %}
+<div class="job-details" id="jobDetails">
+    <header class="details-header">
+        <h3 class="details-title">Job Details</h3>
+        <button class="btn btn-icon" id="closePanel" aria-label="Close panel">×</button>
+    </header>
+    
+    <div class="details-content" id="detailsContent">
+        <p class="details-placeholder">Select a job to view details</p>
+    </div>
+    
+    <footer class="details-actions" id="detailsActions" hidden>
+        <button class="btn btn-danger" data-action="cancel">Cancel Job</button>
+        <button class="btn btn-secondary" data-action="retry">Retry</button>
+    </footer>
+</div>
+{% endblock %}
