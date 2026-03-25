@@ -14,6 +14,7 @@
 │   │   │   │   └── 🐍 __init__.py
 │   │   │   ├── 📁 tests
 │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   ├── 🐍 conftest.py
 │   │   │   │   ├── 🐍 test_consumers.py
 │   │   │   │   ├── 🐍 test_models.py
 │   │   │   │   ├── 🐍 test_serializers.py
@@ -47,6 +48,7 @@
 │   │   │   │   └── 🐍 visual_prompt.py
 │   │   │   ├── 📁 tests
 │   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   ├── 🐍 conftest.py
 │   │   │   │   ├── 🐍 test_graph.py
 │   │   │   │   ├── 🐍 test_nodes.py
 │   │   │   │   ├── 🐍 test_runner.py
@@ -130,6 +132,7 @@
 │   ├── ⚙️ pyproject.toml
 │   ├── 📄 requirements-dev.txt
 │   └── 📄 requirements.txt
+├── 📝 Project File Tree.md
 ├── 📝 README.md
 └── 📄 scaffold_instaAutoAI.sh
 ```
