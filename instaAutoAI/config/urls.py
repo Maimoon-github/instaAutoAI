@@ -8,7 +8,7 @@ urlpatterns = [
     path("api/v1/", include("instaAutoAI.apps.jobs.urls")),
     path("api/v1/", include("instaAutoAI.apps.pipeline.urls")),
     path("api/v1/", include("instaAutoAI.apps.users.urls")),
-    path("", include("instaAutoAI.apps.dashboard.urls")),  # if dashboard exists
+    # path("", include("instaAutoAI.apps.dashboard.urls")),  # if dashboard exists
 ]
 
 # Serve media files during development

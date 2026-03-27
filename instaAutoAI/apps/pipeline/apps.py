@@ -17,7 +17,7 @@ _ready_executed = False
 
 class PipelineConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "apps.pipeline"
+    name = "instaAutoAI.apps.pipeline"
     verbose_name = "Content Pipeline"
 
     def ready(self) -> None:

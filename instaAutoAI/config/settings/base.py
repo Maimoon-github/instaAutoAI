@@ -60,9 +60,9 @@ INSTALLED_APPS = [
     "channels",
     "django_filters",
     # Local apps
-    "instaAutoAI.apps.jobs",
-    "instaAutoAI.apps.pipeline",
-    "instaAutoAI.apps.users",
+    "apps.jobs",
+    "apps.pipeline",
+    "apps.users",
 ]
 
 MIDDLEWARE = [
@@ -144,6 +144,15 @@ MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media"))
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# CRITICAL: Custom User Model Configuration
+# This MUST be set to prevent auth.User and users.User clashes
+AUTH_USER_MODEL = "users.User"  # Format: "app_label.ModelName"
+
+# The app_label is determined by the AppsConfig in apps/users/apps.py
+# which has: name = "apps.users" → app_label = "users" 
+
 
 # Celery Configuration
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")

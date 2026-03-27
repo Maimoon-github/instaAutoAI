@@ -1,12 +1,19 @@
 """
 LangGraph state management with TypedDict, reducers, and Redis checkpointing.
 """
+# OLD (broken):
+# from langgraph.checkpoint.redis import RedisSaver
+
+# NEW (correct):
+from langgraph.checkpoint.redis import RedisSaver  # This now works from langgraph-checkpoint-redis package
+# OR for memory-optimized version:
+# from langgraph.checkpoint.redis.shallow import ShallowRedisSaver
 
 from typing import Annotated, Any, Dict, List, Optional
 from datetime import datetime
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.base import BaseCheckpointSaver
-from langgraph.checkpoint.redis import RedisSaver
+# from langgraph.checkpoint.redis import RedisSaver
 from typing_extensions import TypedDict
 import json
 import logging
