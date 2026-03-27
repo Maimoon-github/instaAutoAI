@@ -4,6 +4,11 @@
 ├── 📁 docs
 │   └── 📝 Architecture.md
 ├── 📁 instaAutoAI
+│   ├── 📁 .pytest_cache
+│   │   ├── 📁 v
+│   │   ├── ⚙️ .gitignore
+│   │   ├── 📄 CACHEDIR.TAG
+│   │   └── 📝 README.md
 │   ├── 📁 apps
 │   │   ├── 📁 jobs
 │   │   │   ├── 📁 management
@@ -11,6 +16,9 @@
 │   │   │   │   │   ├── 🐍 __init__.py
 │   │   │   │   │   ├── 🐍 purge_old_jobs.py
 │   │   │   │   │   └── 🐍 retry_failed_jobs.py
+│   │   │   │   └── 🐍 __init__.py
+│   │   │   ├── 📁 migrations
+│   │   │   │   ├── 🐍 0001_initial.py
 │   │   │   │   └── 🐍 __init__.py
 │   │   │   ├── 📁 tests
 │   │   │   │   ├── 🐍 __init__.py
@@ -62,18 +70,23 @@
 │   │   │   ├── 🐍 llm_client.py
 │   │   │   ├── 🐍 runner.py
 │   │   │   ├── 🐍 state.py
+│   │   │   ├── 🐍 urls.py
 │   │   │   └── 🐍 vram_manager.py
-│   │   └── 📁 users
-│   │       ├── 📁 tests
-│   │       │   ├── 🐍 __init__.py
-│   │       │   └── 🐍 test_views.py
-│   │       ├── 🐍 __init__.py
-│   │       ├── 🐍 admin.py
-│   │       ├── 🐍 apps.py
-│   │       ├── 🐍 models.py
-│   │       ├── 🐍 serializers.py
-│   │       ├── 🐍 urls.py
-│   │       └── 🐍 views.py
+│   │   ├── 📁 users
+│   │   │   ├── 📁 migrations
+│   │   │   │   ├── 🐍 0001_initial.py
+│   │   │   │   └── 🐍 __init__.py
+│   │   │   ├── 📁 tests
+│   │   │   │   ├── 🐍 __init__.py
+│   │   │   │   └── 🐍 test_views.py
+│   │   │   ├── 🐍 __init__.py
+│   │   │   ├── 🐍 admin.py
+│   │   │   ├── 🐍 apps.py
+│   │   │   ├── 🐍 models.py
+│   │   │   ├── 🐍 serializers.py
+│   │   │   ├── 🐍 urls.py
+│   │   │   └── 🐍 views.py
+│   │   └── 🐍 __init__.py
 │   ├── 📁 checkpoints
 │   │   └── ⚙️ .gitkeep
 │   ├── 📁 config
@@ -84,7 +97,7 @@
 │   │   │   └── 🐍 production.py
 │   │   ├── 🐍 __init__.py
 │   │   ├── 🐍 asgi.py
-│   │   ├── 🐍 celery.py
+│   │   ├── 🐍 celery_app.py
 │   │   ├── 🐍 urls.py
 │   │   └── 🐍 wsgi.py
 │   ├── 📁 core
@@ -127,9 +140,11 @@
 │   ├── ⚙️ .env.example
 │   ├── ⚙️ .gitignore
 │   ├── 📄 Makefile
+│   ├── 📄 db.sqlite3
 │   ├── 🌐 instaAutoAI_gantt_7day.html
 │   ├── 🐍 manage.py
 │   ├── ⚙️ pyproject.toml
+│   ├── ⚙️ pytest.ini
 │   ├── 📄 requirements-dev.txt
 │   └── 📄 requirements.txt
 ├── 📝 Project File Tree.md

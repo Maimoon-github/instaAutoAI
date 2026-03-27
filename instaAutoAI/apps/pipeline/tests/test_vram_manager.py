@@ -12,13 +12,18 @@ from apps.pipeline.exceptions import VRAMException
 
 pytestmark = pytest.mark.asyncio
 
+@pytest.fixture(autouse=True)
+def set_logging():
+    import logging
+    logging.getLogger("apps.pipeline.vram_manager").setLevel(logging.DEBUG)
+
 
 class TestVRAMManager:
     async def test_context_manager_no_gpu(self, monkeypatch):
         """Should skip VRAM management when CUDA is not available."""
         monkeypatch.setattr("torch.cuda.is_available", lambda: False)
         manager = VRAMManager(required_mb=100)
-        async with manager():
+        async with manager:
             pass  # Should not raise
 
     async def test_preflight_check_success(self, mock_torch_cuda):
@@ -39,19 +44,19 @@ class TestVRAMManager:
         mock_torch_cuda.memory_reserved.return_value = 7.9 * 1024**3
         manager = VRAMManager(required_mb=1024)
         with pytest.raises(VRAMException, match="Insufficient VRAM"):
-            async with manager():
+            async with manager:
                 pass
 
     async def test_context_manager_clears_cache(self, mock_torch_cuda):
         """Should call torch.cuda.empty_cache on exit."""
         manager = VRAMManager()
-        async with manager():
+        async with manager:
             pass
         mock_torch_cuda.empty_cache.assert_called_once()
 
     async def test_context_manager_logs_usage(self, mock_torch_cuda, caplog):
         """Should log memory usage on exit."""
         manager = VRAMManager()
-        async with manager():
+        async with manager:
             pass
         assert "VRAM usage: initial" in caplog.text

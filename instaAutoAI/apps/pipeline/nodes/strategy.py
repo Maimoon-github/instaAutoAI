@@ -47,14 +47,20 @@ async def _generate_strategy(state: PipelineState) -> Dict[str, Any]:
     return {"strategy": strategy, "progress": 10, "current_node": "strategy"}
 
 
-@node(rate_limiter=RateLimiter(max_concurrent=10))  # LLM calls limited to 10 concurrent
+@node(rate_limiter=RateLimiter(max_concurrent=10))
 async def strategy_node(state: PipelineState) -> dict:
     """
     Strategy node: uses LLM to generate content strategy.
     Returns state updates including 'strategy' and progress.
     """
-    # Optional: use Command for conditional routing based on strategy
+    # Idempotency: skip if strategy already exists and has content
+    existing_strategy = state.get("strategy")
+    if existing_strategy and existing_strategy.get("primary_message"):
+        return {
+            "strategy": existing_strategy, 
+            "progress": 10, 
+            "current_node": "strategy"
+        }
+        
     result = await _generate_strategy(state)
-    # If complexity is high, maybe branch to additional analysis
-    # return Command(goto="special_node", update=result)
     return result

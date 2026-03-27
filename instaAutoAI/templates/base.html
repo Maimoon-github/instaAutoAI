@@ -14,8 +14,13 @@
     
     <!-- WebSocket Configuration -->
     <script>
+        // window.CONFIG = {
+        //     websocketUrl: '{{ websocket_url|default:"ws://localhost:8000/ws/jobs/" }}',
+        //     userId: '{{ user.id|default:"anonymous" }}',
+        //     csrfToken: '{{ csrf_token }}'
+        // };
         window.CONFIG = {
-            websocketUrl: '{{ websocket_url|default:"ws://localhost:8000/ws/jobs/" }}',
+            websocketUrl: '',  // will be set when a job is selected
             userId: '{{ user.id|default:"anonymous" }}',
             csrfToken: '{{ csrf_token }}'
         };
@@ -31,8 +36,7 @@
         </div>
         <nav class="header-nav" role="navigation" aria-label="Main navigation">
             {% block header_nav %}
-            <a href="{% url 'dashboard' %}" class="nav-link active">Dashboard</a>
-            <a href="{% url 'jobs:list' %}" class="nav-link">Jobs</a>
+            <a href="{% url 'jobs:dashboard' %}" class="nav-link active">Dashboard</a>
             <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
             {% endblock %}
         </nav>

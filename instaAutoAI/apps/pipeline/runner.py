@@ -14,6 +14,8 @@ from langgraph.graph import StateGraph
 from .graph import get_graph
 from .state import PipelineState
 
+from datetime import datetime
+
 logger = logging.getLogger(__name__)
 
 
@@ -98,3 +100,31 @@ class PipelineRunner:
         # We'll rely on the checkpointer to auto-expire or ignore.
         # For now, just a placeholder.
         logger.info("Cleanup for thread %s – no automatic checkpoint deletion", self.thread_id)
+
+
+async def run_pipeline(job_id: str, request_data: dict) -> dict:
+    """
+    Entry point for the pipeline from Celery task.
+    """
+    from .state import PipelineState  # avoid circular import
+
+    runner = PipelineRunner(thread_id=UUID(job_id))
+    initial_state: PipelineState = {
+        "job_id": job_id,
+        "request_data": request_data,
+        "messages": [],
+        "current_node": "",
+        "progress": 0,
+        "result": {},
+        "error": None,
+        "timestamp": datetime.utcnow().isoformat(),
+        "strategy": {},
+        "prompts": [],
+        "images": [],
+        "videos": [],
+        "captions": [],
+        "hashtags": [],
+        "export_metadata": {},
+    }
+    final_state = await runner.arun(initial_state)
+    return final_state

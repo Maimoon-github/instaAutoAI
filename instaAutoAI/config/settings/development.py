@@ -124,3 +124,7 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+
+# Suppress staticfiles warning during tests
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

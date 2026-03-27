@@ -10,7 +10,14 @@ from typing import Dict, Any
 from django.conf import settings
 from django.http import JsonResponse
 from redis import Redis
-import torch
+
+# Conditional import for torch
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
 
 from .exceptions import PipelineException
 
@@ -23,7 +30,6 @@ class HealthChecker:
         self.redis_client = None
 
     async def check_redis(self) -> Dict[str, Any]:
-        """Check Redis connectivity."""
         start = time.time()
         try:
             if not self.redis_client:
@@ -34,7 +40,8 @@ class HealthChecker:
             return {"status": "error", "error": str(e), "latency_ms": (time.time() - start) * 1000}
 
     async def check_gpu(self) -> Dict[str, Any]:
-        """Check GPU availability and VRAM."""
+        if not TORCH_AVAILABLE:
+            return {"status": "error", "error": "PyTorch not installed"}
         if not torch.cuda.is_available():
             return {"status": "error", "error": "CUDA not available"}
         try:
@@ -55,10 +62,6 @@ class HealthChecker:
             return {"status": "error", "error": str(e)}
 
     async def check_llm_api(self) -> Dict[str, Any]:
-        """Check LLM API connectivity (lightweight ping)."""
-        # Use a fast, cheap request (e.g., list models) – requires async client.
-        # This is optional; we'll implement a quick check.
-        # For simplicity, we'll just return ok if we have an API key.
         if settings.OPENAI_API_KEY:
             return {"status": "ok", "provider": "openai"}
         elif settings.ANTHROPIC_API_KEY:
@@ -67,7 +70,6 @@ class HealthChecker:
             return {"status": "error", "error": "No LLM API key configured"}
 
     async def all_checks(self) -> Dict[str, Any]:
-        """Run all dependency checks concurrently."""
         results = await asyncio.gather(
             self.check_redis(),
             self.check_gpu(),
@@ -81,20 +83,13 @@ class HealthChecker:
         }
 
 
-# Django view wrappers
 async def liveness(request):
-    """Liveness probe: returns 200 if process is alive."""
     return JsonResponse({"status": "ok"})
 
 
 async def readiness(request):
-    """
-    Readiness probe: checks all dependencies.
-    Returns 200 only if all critical dependencies are healthy.
-    """
     checker = HealthChecker()
     checks = await checker.all_checks()
-    # Consider redis and gpu critical; llm_api is optional (can be degraded)
     is_ready = (
         checks["redis"]["status"] == "ok"
         and checks["gpu"]["status"] == "ok"

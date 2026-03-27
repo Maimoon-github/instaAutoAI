@@ -65,18 +65,33 @@ async def _generate_images(prompts: List[Dict]) -> List[str]:
     return images
 
 
-@node(rate_limiter=RateLimiter(max_concurrent=1))  # VRAM manager handles device
+@node(rate_limiter=RateLimiter(max_concurrent=1))
 async def image_gen_node(state: PipelineState) -> dict:
-    """
-    Image generation node: uses Replicate to create images from prompts.
-    Requires VRAM management.
-    """
+    """Image generation node."""
+    # Idempotency check
+    existing_images = state.get("images")
+    if existing_images:
+        return {"images": existing_images, "progress": 50, "current_node": "image_gen"}
+        
     prompts = state.get("prompts", [])
+    
+    # If no prompts, check if visual content was actually requested
     if not prompts:
-        return {"error": "No prompts found for image generation", "progress": -1}
-
-    # Use VRAM manager to ensure GPU resources are available
-    vram_mgr = VRAMManager(required_mb=1024)  # adjust based on model needs
+        strategy = state.get("strategy", {})
+        content_mix = strategy.get("suggested_content_mix", ["image"])
+        
+        # If no visual content requested, skip gracefully
+        if not content_mix:
+            return {"images": [], "progress": 50, "current_node": "image_gen"}
+        else:
+            # Visual content was requested but prompts are missing - this is an error
+            return {
+                "error": "No prompts found for image generation", 
+                "progress": -1
+            }
+    
+    # Generate images from prompts...
+    vram_mgr = VRAMManager(required_mb=1024)
     async with vram_mgr:
         images = await _generate_images(prompts)
 

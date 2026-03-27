@@ -1,28 +1,23 @@
 """
 Celery task bridge for the InstaAutoAI pipeline.
-
-There is exactly one task: ``execute_pipeline``.  It is enqueued by the
-``post_save`` signal in ``signals.py`` (via ``transaction.on_commit``) when
-a new ``GenerationJob`` is created with ``status="queued"``.
-
+There is exactly one task: `execute_pipeline`.  It is enqueued by the
+`post_save` signal in `signals.py` (via `transaction.on_commit`) when
+a new `GenerationJob` is created with `status="queued"`.
 Celery workers are synchronous processes.  The LangGraph pipeline is fully
-async.  ``asyncio.run()`` bridges the two worlds — it creates a fresh event
+async.  `asyncio.run()` bridges the two worlds — it creates a fresh event
 loop for each task execution, runs the pipeline to completion, then tears
 the loop down.  This is the correct pattern; do NOT use
-``asyncio.get_event_loop().run_until_complete()`` which is deprecated in
-Python 3.10+ and raises ``DeprecationWarning`` in 3.12.
-
+`asyncio.get_event_loop().run_until_complete()` which is deprecated in
+Python 3.10+ and raises `DeprecationWarning` in 3.12.
 Worker settings (enforced in config/celery.py + supervisord.conf):
-    --concurrency=1             one job at a time
-    worker_max_tasks_per_child=1 restart after each task → flushes VRAM refs
-    task_acks_late=True         ack only after task completes → no lost jobs
-    task_reject_on_worker_lost=True  re-queue on SIGKILL → no silent failures
+--concurrency=1             one job at a time
+worker_max_tasks_per_child=1 restart after each task → flushes VRAM refs
+task_acks_late=True         ack only after task completes → no lost jobs
+task_reject_on_worker_lost=True  re-queue on SIGKILL → no silent failures
 """
 import asyncio
 import logging
-
 from celery import shared_task
-
 from .models import GenerationJob
 
 logger = logging.getLogger(__name__)
@@ -74,6 +69,16 @@ def execute_pipeline(self, job_id: str, request_data: dict) -> None:
         )
         return
 
+    # Idempotency guard: skip if job is already in a terminal state [[20]][[24]]
+    if job.status in (GenerationJob.Status.DONE, GenerationJob.Status.FAILED):
+        logger.info(
+            "Task %s: job %s already %s, skipping.",
+            self.request.id,
+            job_id,
+            job.status,
+        )
+        return
+
     job.mark_running(celery_task_id=self.request.id)
 
     try:
@@ -110,7 +115,6 @@ def execute_pipeline(self, job_id: str, request_data: dict) -> None:
 async def _run_pipeline_async(job_id: str, request_data: dict) -> None:
     """
     Thin async shim that imports and calls the pipeline runner.
-
     The import is deferred to avoid loading the entire pipeline package
     (torch, diffusers, langgraph, crewai) at worker startup — they only
     load when a task actually runs.

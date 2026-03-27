@@ -11,10 +11,6 @@ from typing import Optional
 
 from langgraph.graph import StateGraph
 from langgraph.checkpoint.base import BaseCheckpointSaver
-from langgraph.checkpoint.postgres import AsyncPostgresSaver
-from langgraph.checkpoint.redis import AsyncRedisSaver
-from psycopg_pool import AsyncConnectionPool
-from redis.asyncio import Redis
 
 from .state import PipelineState
 from .nodes import (
@@ -46,22 +42,43 @@ async def get_checkpointer() -> BaseCheckpointSaver:
 
     # Determine which checkpointer to use
     if hasattr(settings, "LANGGRAPH_CHECKPOINT_REDIS_URL"):
-        # Use Redis
-        redis_client = Redis.from_url(settings.LANGGRAPH_CHECKPOINT_REDIS_URL)
-        _checkpointer_cache = AsyncRedisSaver(redis_client)
-        await _checkpointer_cache.asetup()
-        logger.info("LangGraph using Redis checkpointer")
-    elif hasattr(settings, "LANGGRAPH_CHECKPOINT_DB_URL"):
-        # Use PostgreSQL
-        pool = AsyncConnectionPool(settings.LANGGRAPH_CHECKPOINT_DB_URL)
-        _checkpointer_cache = AsyncPostgresSaver(pool)
-        await _checkpointer_cache.setup()
-        logger.info("LangGraph using PostgreSQL checkpointer")
-    else:
-        # Fallback to in-memory (development only)
+        # Try Redis
+        try:
+            from langgraph.checkpoint.redis import AsyncRedisSaver
+            from redis.asyncio import Redis
+
+            redis_client = Redis.from_url(settings.LANGGRAPH_CHECKPOINT_REDIS_URL)
+            _checkpointer_cache = AsyncRedisSaver(redis_client)
+            await _checkpointer_cache.asetup()
+            logger.info("LangGraph using Redis checkpointer")
+            return _checkpointer_cache
+        except ImportError as e:
+            logger.warning("Redis checkpointer not available: %s", e)
+
+    if hasattr(settings, "LANGGRAPH_CHECKPOINT_DB_URL"):
+        # Try PostgreSQL
+        try:
+            from langgraph.checkpoint.postgres import AsyncPostgresSaver
+            from psycopg_pool import AsyncConnectionPool
+
+            pool = AsyncConnectionPool(settings.LANGGRAPH_CHECKPOINT_DB_URL)
+            _checkpointer_cache = AsyncPostgresSaver(pool)
+            await _checkpointer_cache.setup()
+            logger.info("LangGraph using PostgreSQL checkpointer")
+            return _checkpointer_cache
+        except ImportError as e:
+            logger.warning("PostgreSQL checkpointer not available: %s", e)
+
+    # Fallback to in‑memory
+    try:
+        from langgraph.checkpoint.memory import AsyncMemorySaver
+        _checkpointer_cache = AsyncMemorySaver()
+        logger.warning("No checkpoint DB configured – using in‑memory AsyncMemorySaver")
+    except ImportError:
+        # Older LangGraph version may not have AsyncMemorySaver; fallback to sync MemorySaver
         from langgraph.checkpoint.memory import MemorySaver
         _checkpointer_cache = MemorySaver()
-        logger.warning("No checkpoint DB configured – using in-memory storage")
+        logger.warning("No checkpoint DB configured – using in‑memory MemorySaver (sync)")
 
     return _checkpointer_cache
 

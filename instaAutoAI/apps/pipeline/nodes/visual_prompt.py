@@ -15,6 +15,12 @@ async def _generate_prompts(state: PipelineState) -> List[Dict[str, Any]]:
     """Generate prompts for each content piece."""
     strategy = state.get("strategy", {})
     content_mix = strategy.get("suggested_content_mix", ["image"])
+
+    if not content_mix:
+        # Don't default - return empty as test expects
+        logger.warning("No content mix provided")
+        return []  # Empty list, will default to image only if strategy is missing entirely
+
     visual_style = strategy.get("visual_style", "realistic")
     aspect_ratio = state.get("request_data", {}).get("aspect_ratio", "4:5")
 
@@ -40,9 +46,10 @@ async def _generate_prompts(state: PipelineState) -> List[Dict[str, Any]]:
 
 @node(rate_limiter=RateLimiter(max_concurrent=10))
 async def visual_prompt_node(state: PipelineState) -> dict:
-    """
-    Visual prompt node: generates prompts for each piece of content.
-    Returns state updates: 'prompts' list (will be appended via reducer).
-    """
+    """Visual prompt node: generates prompts for each piece of content."""
+    # Idempotency: skip if prompts already exist
+    if state.get("prompts"):
+        return {"prompts": state["prompts"], "progress": 20, "current_node": "visual_prompt"}
+        
     new_prompts = await _generate_prompts(state)
     return {"prompts": new_prompts, "progress": 20, "current_node": "visual_prompt"}

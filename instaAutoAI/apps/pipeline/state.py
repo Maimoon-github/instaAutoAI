@@ -1,24 +1,16 @@
 """
 LangGraph state management with TypedDict, reducers, and Redis checkpointing.
 """
-# OLD (broken):
-# from langgraph.checkpoint.redis import RedisSaver
 
-# NEW (correct):
-from langgraph.checkpoint.redis import RedisSaver  # This now works from langgraph-checkpoint-redis package
-# OR for memory-optimized version:
-# from langgraph.checkpoint.redis.shallow import ShallowRedisSaver
-
+# from typing import Annotated, Any, Dict, Optional
 from typing import Annotated, Any, Dict, List, Optional
 from datetime import datetime
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.base import BaseCheckpointSaver
-# from langgraph.checkpoint.redis import RedisSaver
 from typing_extensions import TypedDict
-import json
 import logging
 from django.conf import settings
-from redis import Redis
+import redis
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +18,6 @@ logger = logging.getLogger(__name__)
 class PipelineState(TypedDict):
     """
     LangGraph state schema for the content generation pipeline.
-
-    Fields:
-        messages: List of conversation messages (with add_messages reducer).
-        current_node: Name of the node currently executing.
-        progress: Integer 0–100 completion percentage.
-        result: Accumulated output from agents (merged via custom reducer).
-        error: Optional error message.
-        timestamp: ISO-format timestamp of last update.
     """
     messages: Annotated[list, add_messages]
     current_node: str
@@ -41,6 +25,19 @@ class PipelineState(TypedDict):
     result: Dict[str, Any]
     error: Optional[str]
     timestamp: str
+    # Add these missing keys used by nodes:
+    job_id: Optional[str]
+    request_data: Optional[Dict[str, Any]]
+    strategy: Optional[Dict[str, Any]]
+    # prompts: Optional[List[Dict[str, Any]]]
+    # images: Optional[List[str]]
+    prompts: Optional[list[Dict[str, Any]]]
+    images: Optional[list[str]]
+    videos: Optional[List[str]]
+    captions: Optional[List[str]]
+    hashtags: Optional[List[str]]
+    export_metadata: Optional[Dict[str, Any]]
+
 
 
 def merge_result(a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:
@@ -52,35 +49,46 @@ class StateReducer:
     """Custom reducers for LangGraph state updates."""
     @staticmethod
     def add_messages(messages: list, new_messages: list) -> list:
-        """Use LangGraph's built-in add_messages reducer."""
         return add_messages(messages, new_messages)
 
     @staticmethod
     def merge_result(a: Dict[str, Any], b: Dict[str, Any]) -> Dict[str, Any]:
-        """Merge two result dictionaries."""
         return merge_result(a, b)
 
 
 class CheckpointManager:
     """
-    Manages checkpoint persistence using Redis (LangGraph RedisSaver).
-    Provides methods to save, load, and clean up checkpoints.
+    Manages checkpoint persistence using Redis (if available), otherwise in‑memory.
     """
     def __init__(self):
         self.redis_url = settings.REDIS_URL
-        self.client = Redis.from_url(self.redis_url)
-        self.saver = RedisSaver(self.client)
-        self.saver.setup()  # initializes Redis keyspaces
+        self._saver = None
+        self._client = None
+
+    @property
+    def saver(self):
+        if self._saver is None:
+            try:
+                from langgraph.checkpoint.redis import AsyncRedisSaver
+                from redis.asyncio import Redis as AsyncRedis
+                self._client = AsyncRedis.from_url(self.redis_url)
+                self._saver = AsyncRedisSaver(self._client)
+                # Note: asetup() is async; we'll call it lazily
+                logger.info("Using Redis checkpointer")
+            except ImportError:
+                # Fallback to in‑memory
+                from langgraph.checkpoint.memory import AsyncMemorySaver
+                self._saver = AsyncMemorySaver()
+                logger.warning("Redis checkpointer not available; using in‑memory AsyncMemorySaver")
+        return self._saver
+
+    async def _ensure_setup(self):
+        if hasattr(self.saver, 'asetup') and not getattr(self, '_setup_done', False):
+            await self.saver.asetup()
+            self._setup_done = True
 
     async def save(self, thread_id: str, state: PipelineState, checkpoint_id: Optional[str] = None):
-        """
-        Save a checkpoint for the given thread_id.
-
-        :param thread_id: LangGraph thread identifier (typically job_id).
-        :param state: Current pipeline state.
-        :param checkpoint_id: Optional checkpoint ID; generates new if not provided.
-        """
-        # Use RedisSaver's async put method (LangGraph >=0.3)
+        await self._ensure_setup()
         await self.saver.aput(
             config={"configurable": {"thread_id": thread_id}},
             checkpoint={"state": state, "checkpoint_id": checkpoint_id},
@@ -88,10 +96,7 @@ class CheckpointManager:
         logger.debug("Saved checkpoint for thread %s", thread_id)
 
     async def load(self, thread_id: str) -> Optional[PipelineState]:
-        """
-        Load the latest checkpoint for a thread.
-        Returns None if no checkpoint exists.
-        """
+        await self._ensure_setup()
         config = {"configurable": {"thread_id": thread_id}}
         checkpoint_tuple = await self.saver.aget(config)
         if checkpoint_tuple:
@@ -99,10 +104,12 @@ class CheckpointManager:
         return None
 
     async def delete(self, thread_id: str):
-        """Delete all checkpoints for a thread (cleanup after job completion)."""
-        # RedisSaver doesn't expose a direct delete; we'll use Redis keys.
-        pattern = f"langgraph:checkpoint:{thread_id}:*"
-        keys = self.client.keys(pattern)
-        if keys:
-            self.client.delete(*keys)
-            logger.info("Deleted %d checkpoints for thread %s", len(keys), thread_id)
+        # Redis deletion is not supported by the generic saver; fallback to direct Redis if available
+        if self._client:
+            pattern = f"langgraph:checkpoint:{thread_id}:*"
+            keys = await self._client.keys(pattern)
+            if keys:
+                await self._client.delete(*keys)
+                logger.info("Deleted %d checkpoints for thread %s", len(keys), thread_id)
+        else:
+            logger.debug("Checkpoint deletion not implemented for in‑memory saver")

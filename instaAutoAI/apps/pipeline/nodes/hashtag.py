@@ -39,9 +39,11 @@ async def _generate_hashtags(state: PipelineState) -> List[str]:
 
 @node(rate_limiter=RateLimiter(max_concurrent=10))
 async def hashtag_node(state: PipelineState) -> dict:
-    """
-    Hashtag node: generates hashtags.
-    Returns state updates: 'hashtags' list (appended via reducer).
-    """
+    """Hashtag node: generates hashtags."""
+    # Idempotency: skip if hashtags already exist and are non-empty
+    existing_hashtags = state.get("hashtags")
+    if existing_hashtags:
+        return {"hashtags": existing_hashtags, "progress": 80, "current_node": "hashtag"}
+        
     hashtags = await _generate_hashtags(state)
     return {"hashtags": hashtags, "progress": 80, "current_node": "hashtag"}

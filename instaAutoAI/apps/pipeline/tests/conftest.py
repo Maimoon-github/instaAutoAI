@@ -9,6 +9,10 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.test import override_settings
 
+import logging
+logging.getLogger("apps.pipeline").setLevel(logging.DEBUG)
+
+
 # Force transaction=True for all async DB tests
 def pytest_collection_modifyitems(config, items):
     for item in items:

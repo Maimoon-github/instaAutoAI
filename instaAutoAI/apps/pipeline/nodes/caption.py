@@ -44,9 +44,11 @@ async def _generate_captions(state: PipelineState) -> List[str]:
 
 @node(rate_limiter=RateLimiter(max_concurrent=10))
 async def caption_node(state: PipelineState) -> dict:
-    """
-    Caption node: generates caption variations.
-    Returns state updates: 'captions' list (appended via reducer).
-    """
+    """Caption node: generates caption variations."""
+    # Idempotency: skip if captions already exist and are non-empty
+    existing_captions = state.get("captions")
+    if existing_captions:
+        return {"captions": existing_captions, "progress": 70, "current_node": "caption"}
+        
     captions = await _generate_captions(state)
     return {"captions": captions, "progress": 70, "current_node": "caption"}

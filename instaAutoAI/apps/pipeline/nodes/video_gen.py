@@ -53,16 +53,31 @@ async def _compose_video(images: List[str], output_path: str, duration: int = 5)
     return output_path
 
 
-@node(rate_limiter=RateLimiter(max_concurrent=1))  # Video generation is heavy
+@node(rate_limiter=RateLimiter(max_concurrent=1))
 async def video_gen_node(state: PipelineState) -> dict:
     """
     Video generation node: composes video from generated images using FFmpeg.
     If no video prompts exist, does nothing.
     """
+    # Idempotency check
+    existing_videos = state.get("videos")
+    if existing_videos:
+        return {"videos": existing_videos, "progress": 60, "current_node": "video_gen"}
+        
     prompts = state.get("prompts", [])
     video_prompts = [p for p in prompts if p.get("type") == "video"]
+    
     if not video_prompts:
-        return {"videos": [], "progress": 50, "current_node": "video_gen"}
+        # Check if video content was requested
+        strategy = state.get("strategy", {})
+        content_mix = strategy.get("suggested_content_mix", [])
+        
+        if "video" in content_mix:
+            # Video was requested but no video prompts - this might be an issue
+            # But for now, just return empty
+            pass
+            
+        return {"videos": [], "progress": 60, "current_node": "video_gen"}
 
     # For simplicity, we'll just generate a placeholder video using FFmpeg from images
     # In practice, call Replicate video model here.

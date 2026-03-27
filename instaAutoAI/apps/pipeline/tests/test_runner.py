@@ -3,7 +3,7 @@ Tests for PipelineRunner with mocked graph.
 """
 
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 import asyncio
 from uuid import uuid4
 
@@ -19,14 +19,21 @@ class TestPipelineRunner:
         """Mock get_graph to return a controllable async graph."""
         mock_graph = AsyncMock()
         mock_graph.ainvoke = AsyncMock(return_value={"progress": 100, "result": "done"})
-        mock_graph.astream = AsyncMock()
-        # Make astream an async generator that yields two updates
+        
+        # FIX: Don't use AsyncMock for astream - use a regular Mock with side_effect 
+        # that returns an async generator function result
         async def astream_gen(*a, **kw):
             yield {"node1": {"progress": 10}}
             yield {"node2": {"progress": 50}}
-        mock_graph.astream.return_value = astream_gen()
+        
+        # Assign the async generator function directly as side_effect
+        # mock_graph.astream = mock.Mock(side_effect=astream_gen)
+        mock_graph.astream = Mock(side_effect=astream_gen)
+        
         monkeypatch.setattr("apps.pipeline.runner.get_graph", AsyncMock(return_value=mock_graph))
-        return mock_graph
+        return mock_graph 
+
+
 
     async def test_arun_success(self, mock_graph):
         """Should run pipeline and return final state."""
@@ -68,13 +75,16 @@ class TestPipelineRunner:
         assert updates[0]["progress"] == 10
         assert updates[1]["progress"] == 50
 
+
     async def test_astream_handles_cancellation(self, mock_graph):
         """Should handle cancellation during streaming."""
-        # Make astream raise CancelledError after first yield
         async def astream_gen_cancel(*a, **kw):
             yield {"node1": {"progress": 10}}
             raise asyncio.CancelledError()
-        mock_graph.astream.return_value = astream_gen_cancel()
+        
+        # FIX: Use mock.Mock instead of AsyncMock for astream
+        mock_graph.astream = Mock(side_effect=astream_gen_cancel)
+        
         thread_id = uuid4()
         runner = PipelineRunner(thread_id)
         initial_state = {}
@@ -82,7 +92,8 @@ class TestPipelineRunner:
             async for _ in runner.astream(initial_state):
                 pass
 
-    async def test_cleanup(self, caplog):
+
+    async def test_cleanup(self, caplog): 
         """Cleanup should log but not raise."""
         thread_id = uuid4()
         runner = PipelineRunner(thread_id)
